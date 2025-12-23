@@ -2,13 +2,8 @@ import { useState, useContext } from 'react';
 import { TextField, Button, Box, Typography, Alert } from '@mui/material';
 import type { AxiosError } from 'axios';
 
-import { api } from '../api/api';
 import { AuthContext } from '../components/AuthContext';
-
-type LoginResponse = {
-  accessToken: string;
-  tokenType: string;
-};
+import { login as loginService } from '../api/auth.service';
 
 export function Login() {
   const [username, setUsername] = useState('');
@@ -19,23 +14,17 @@ export function Login() {
 
   async function handleLogin() {
     setError('');
-
     try {
-      const formData = new URLSearchParams();
-      formData.append('username', username);
-      formData.append('password', password);
+      const formdata = new URLSearchParams();
+      formdata.append('username', username);
+      formdata.append('password', password);
 
-      const response = await api.post<LoginResponse>('/auth/login', formData, {
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-      });
-
-      saveToken(response.data.accessToken);
+      const data = await loginService(username, password);
+      saveToken(data.accessToken);
     } catch (err) {
       const error = err as AxiosError<{ detail?: string }>;
 
-      setError(error.response?.data?.detail || 'Usuário ou senha inválidos');
+      setError(error.response?.data.detail || 'Usuários ou senha Inválidos');
     }
   }
 
