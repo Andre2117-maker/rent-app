@@ -1,9 +1,9 @@
 import { useState, useContext } from 'react';
 import { TextField, Button, Box, Typography, Alert } from '@mui/material';
 import type { AxiosError } from 'axios';
-
 import { AuthContext } from '../components/AuthContext';
 import { login as loginService } from '../api/auth.service';
+import { useNavigate } from 'react-router-dom';
 
 export function Login() {
   const [username, setUsername] = useState('');
@@ -11,6 +11,7 @@ export function Login() {
   const [error, setError] = useState('');
 
   const { saveToken } = useContext(AuthContext);
+  const navigate = useNavigate();
 
   async function handleLogin() {
     setError('');
@@ -21,6 +22,7 @@ export function Login() {
 
       const data = await loginService(username, password);
       saveToken(data.accessToken);
+      navigate('/dashboard');
     } catch (err) {
       const error = err as AxiosError<{ detail?: string }>;
 
