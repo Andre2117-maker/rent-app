@@ -2,8 +2,12 @@ import { useState, useContext } from 'react';
 import { TextField, Button, Box, Typography, Alert } from '@mui/material';
 import type { AxiosError } from 'axios';
 import { AuthContext } from '../components/AuthContext';
-import { login as loginService } from '../api/auth.service';
+import { login as loginService, getProfile } from '../api/auth.service';
 import { useNavigate } from 'react-router-dom';
+
+interface LoginError {
+  detail?: string;
+}
 
 export function Login() {
   const [username, setUsername] = useState('');
@@ -15,18 +19,38 @@ export function Login() {
 
   async function handleLogin() {
     setError('');
-    try {
-      const formdata = new URLSearchParams();
-      formdata.append('username', username);
-      formdata.append('password', password);
 
+    try {
+      // 🔐 Login
       const data = await loginService(username, password);
-      saveToken(data.accessToken);
+
+      const token = data.accessToken;
+
+      if (!token) {
+        console.error('Resposta do login:', data);
+        throw new Error('Token não retornado pelo backend');
+      }
+
+      // 💾 Salva token
+      localStorage.setItem('token', token);
+      saveToken(token);
+
+      // 👤 (Opcional) buscar perfil
+      const me = await getProfile();
+
+      localStorage.setItem('user', JSON.stringify(me));
+      localStorage.setItem('userId', me.id);
+
+      // 🚀 Redireciona
       navigate('/dashboard');
     } catch (err) {
-      const error = err as AxiosError<{ detail?: string }>;
+      const axiosError = err as AxiosError<LoginError>;
 
-      setError(error.response?.data.detail || 'Usuários ou senha Inválidos');
+      setError(
+        axiosError.response?.data?.detail ||
+          axiosError.message ||
+          'Usuário ou senha inválidos'
+      );
     }
   }
 
