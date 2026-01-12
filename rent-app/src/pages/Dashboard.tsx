@@ -8,6 +8,7 @@ import { ReservationModal } from '../components/ReservationModal';
 
 import { getEquipments } from '../api/equipment.service';
 import { createReservation } from '../api/reservation.service';
+import { Link } from 'react-router-dom';
 
 interface ApiErrorDetail {
   type: string;
@@ -110,6 +111,23 @@ export function Dashboard() {
         <Typography variant="h4" mb={3}>
           Equipamentos
         </Typography>
+
+        <Box mb={3}>
+          <Link to="/commands" style={{ textDecoration: 'none' }}>
+            <Typography
+              sx={{
+                display: 'inline-block',
+                padding: '8px 16px',
+                backgroundColor: '#1976d2',
+                color: '#fff',
+                borderRadius: '4px',
+                cursor: 'pointer',
+              }}
+            >
+              Enviar comandos
+            </Typography>
+          </Link>
+        </Box>
 
         <Grid container spacing={3}>
           {/* LOADING */}
