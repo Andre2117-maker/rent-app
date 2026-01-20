@@ -14,6 +14,16 @@ export async function login(username: string, password: string) {
   return response.data;
 }
 
+export async function register(data: {
+  name: string;
+  username: string;
+  email: string;
+  password: string;
+}) {
+  const response = await api.post('/auth/register', data);
+  return response.data;
+}
+
 export async function getProfile() {
   const token = localStorage.getItem('token');
 
@@ -22,15 +32,8 @@ export async function getProfile() {
   }
 
   const response = await api.get('/auth/me', {
-    params: {
-      token,
-    },
+    params: { token },
   });
 
   return response.data;
-}
-
-export function logout() {
-  localStorage.removeItem('token');
-  localStorage.removeItem('userId');
 }
