@@ -36,4 +36,16 @@ export const equipmentsMock: Equipment[] = [
     description: 'Britadeira elétrica 1500W',
     currentStatusName: 'Available',
   },
+  {
+    id: '5',
+    name: 'Lixadeira',
+    description: 'Lixadeira orbital 300W',
+    currentStatusName: 'Offline',
+  },
+  {
+    id: '6',
+    name: 'Esmerilhadeira',
+    description: 'Esmerilhadeira angular 1200W',
+    currentStatusName: 'Available',
+  },
 ];

@@ -4,6 +4,9 @@ import { Dashboard } from './pages/Dashboard';
 import { PrivateRoute } from './routes/PrivateRoute';
 import { Reservations } from './pages/Reservations';
 import { Commands } from './pages/Commands';
+import Register from './pages/Register';
+import Profile from './pages/Profile';
+import { NewEquipment } from './pages/NewEquipment';
 
 function App() {
   return (
@@ -12,6 +15,7 @@ function App() {
         <Route path="/" element={<Navigate to="/login" replace />} />
 
         <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
 
         <Route
           path="/dashboard"
@@ -34,6 +38,23 @@ function App() {
           element={
             <PrivateRoute>
               <Commands />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/profile"
+          element={
+            <PrivateRoute>
+              <Profile />
+            </PrivateRoute>
+          }
+        />
+
+        <Route
+          path="/new-equipment"
+          element={
+            <PrivateRoute>
+              <NewEquipment />
             </PrivateRoute>
           }
         />

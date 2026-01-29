@@ -1,104 +1,113 @@
-import { Box, Typography, Card, CardContent, Chip, Grid } from '@mui/material';
+import { useEffect, useState } from 'react';
+import type { ReservationMock } from '../mocks/reservation.mock';
+import { getReservations } from '../api/reservation.service';
+import { Box, Typography, Paper, Chip, Container, Stack } from '@mui/material';
 import { Header } from '../components/Header';
-import {
-  reservationsMock,
-  type ReservationMock as Reservation,
-  type ReservationStatus,
-} from '../mocks/reservation.mock';
 
 export function Reservations() {
-  const reservations: Reservation[] = reservationsMock;
+  const [list, setList] = useState<ReservationMock[]>([]);
 
-  const activeReservations = reservations.filter((r) => r.status === 'ACTIVE');
+  useEffect(() => {
+    getReservations().then((data) => setList(data));
+  }, []);
 
-  const finishedReservations = reservations.filter(
-    (r) => r.status !== 'ACTIVE'
-  );
-
-  function renderStatusChip(status: ReservationStatus) {
+  const getStatusColor = (
+    status: string
+  ): 'success' | 'error' | 'default' | 'warning' => {
     switch (status) {
       case 'ACTIVE':
-        return <Chip label="Ativa" color="success" />;
-      case 'FINISHED':
-        return <Chip label="Encerrada" color="default" />;
+        return 'success';
       case 'CANCELED':
-        return <Chip label="Cancelada" color="error" />;
+        return 'error';
+      case 'FINISHED':
+        return 'default';
       default:
-        return null;
+        return 'warning';
     }
-  }
-
-  function formatDate(date: string) {
-    return new Date(date).toLocaleString('pt-BR');
-  }
-
-  function ReservationCard({ reservation }: { reservation: Reservation }) {
-    return (
-      <Card>
-        <CardContent>
-          <Typography variant="h6">{reservation.equipment.name}</Typography>
-
-          <Box mt={1} mb={1}>
-            {renderStatusChip(reservation.status)}
-          </Box>
-
-          <Typography variant="body2">
-            Início: {formatDate(reservation.startTime)}
-          </Typography>
-
-          <Typography variant="body2">
-            Fim: {formatDate(reservation.endTime)}
-          </Typography>
-        </CardContent>
-      </Card>
-    );
-  }
+  };
 
   return (
-    <>
+    <Box sx={{ minHeight: '100vh', backgroundColor: '#f0f2f5' }}>
       <Header />
 
-      <Box p={4}>
-        <Typography variant="h4" mb={3}>
+      <Container maxWidth="md" sx={{ py: 6 }}>
+        <Typography variant="h4" fontWeight="800" mb={4} color="#1a1a1a">
           Minhas Reservas
         </Typography>
 
-        {/* RESERVAS ATIVAS */}
-        <Typography variant="h5" mb={2}>
-          Reservas Ativas
-        </Typography>
+        <Stack spacing={2.5}>
+          {list.length > 0 ? (
+            list.map((res) => (
+              <Paper
+                key={res.id}
+                elevation={1}
+                sx={{
+                  p: 3,
+                  borderRadius: 2,
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  transition: 'transform 0.2s, box-shadow 0.2s',
+                  borderLeft: `6px solid ${
+                    res.status === 'ACTIVE'
+                      ? '#2e7d32'
+                      : res.status === 'CANCELED'
+                        ? '#d32f2f'
+                        : '#757575'
+                  }`,
+                  '&:hover': {
+                    boxShadow: 4,
+                    transform: 'translateY(-2px)',
+                  },
+                }}
+              >
+                <Box>
+                  <Typography variant="h6" fontWeight="bold" color="#333">
+                    {res.equipment.name}
+                  </Typography>
+                  <Typography
+                    variant="body2"
+                    color="textSecondary"
+                    sx={{ mt: 0.5 }}
+                  >
+                    🗓️ {new Date(res.startTime).toLocaleDateString()} | 🕒{' '}
+                    {new Date(res.startTime).toLocaleTimeString([], {
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    })}{' '}
+                    às{' '}
+                    {new Date(res.endTime).toLocaleTimeString([], {
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    })}
+                  </Typography>
+                </Box>
 
-        <Grid container spacing={3} mb={4}>
-          {activeReservations.length === 0 && (
-            <Typography>Nenhuma reserva ativa.</Typography>
+                <Chip
+                  label={res.status}
+                  color={getStatusColor(res.status)}
+                  sx={{
+                    fontWeight: 'bold',
+                    borderRadius: '8px',
+                    minWidth: '100px',
+                    textTransform: 'uppercase',
+                    fontSize: '0.75rem',
+                  }}
+                />
+              </Paper>
+            ))
+          ) : (
+            <Paper sx={{ p: 5, textAlign: 'center', borderRadius: 2 }}>
+              <Typography color="textSecondary" variant="h6">
+                Nenhuma reserva encontrada.
+              </Typography>
+              <Typography variant="body2" color="textSecondary">
+                Vá ao Dashboard para reservar um equipamento.
+              </Typography>
+            </Paper>
           )}
-
-          {activeReservations.map((reservation) => (
-            // @ts-expect-error MUI Grid typing
-            <Grid item xs={12} md={6} lg={4} key={reservation.id}>
-              <ReservationCard reservation={reservation} />
-            </Grid>
-          ))}
-        </Grid>
-
-        {/* RESERVAS ENCERRADAS */}
-        <Typography variant="h5" mb={2}>
-          Reservas Encerradas
-        </Typography>
-
-        <Grid container spacing={3}>
-          {finishedReservations.length === 0 && (
-            <Typography>Nenhuma reserva encerrada.</Typography>
-          )}
-
-          {finishedReservations.map((reservation) => (
-            // @ts-expect-error MUI Grid typing
-            <Grid item xs={12} md={6} lg={4} key={reservation.id}>
-              <ReservationCard reservation={reservation} />
-            </Grid>
-          ))}
-        </Grid>
-      </Box>
-    </>
+        </Stack>
+      </Container>
+    </Box>
   );
 }

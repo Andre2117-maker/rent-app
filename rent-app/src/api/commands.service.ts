@@ -1,4 +1,3 @@
-// commands.service.ts
 export type SendCommandDto = {
   equipmentId: string;
   commandTypeId: string;

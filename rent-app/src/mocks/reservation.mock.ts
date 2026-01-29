@@ -14,8 +14,8 @@ export const reservationsMock: ReservationMock[] = [
   {
     id: '1',
     status: 'ACTIVE',
-    startTime: '2026-01-07T10:00:00Z',
-    endTime: '2026-01-07T12:00:00Z',
+    startTime: '2026-01-26T10:00:00Z',
+    endTime: '2026-01-27T12:00:00Z',
     equipment: {
       name: 'Martelo Pneumático',
     },

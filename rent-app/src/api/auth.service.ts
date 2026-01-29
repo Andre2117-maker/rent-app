@@ -1,6 +1,9 @@
 import { api } from './api';
-
-export async function login(username: string, password: string) {
+import type { LoginResponse } from '../types';
+export async function login(
+  username: string,
+  password: string
+): Promise<LoginResponse> {
   const formData = new URLSearchParams();
   formData.append('username', username);
   formData.append('password', password);
@@ -11,6 +14,10 @@ export async function login(username: string, password: string) {
     },
   });
 
+  if (response.data.token) {
+    localStorage.setItem('token', response.data.token);
+  }
+
   return response.data;
 }
 
@@ -19,9 +26,8 @@ export async function register(data: {
   username: string;
   email: string;
   password: string;
-}) {
-  const response = await api.post('/auth/register', data);
-  return response.data;
+}): Promise<void> {
+  await api.post('/auth/register', data);
 }
 
 export async function getProfile() {
@@ -32,7 +38,9 @@ export async function getProfile() {
   }
 
   const response = await api.get('/auth/me', {
-    params: { token },
+    params: {
+      token: token,
+    },
   });
 
   return response.data;

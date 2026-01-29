@@ -21,9 +21,8 @@ export function Login() {
     setError('');
 
     try {
-      // 🔐 Login
+      // 🔐 Login - data recebe a resposta do backend
       const data = await loginService(username, password);
-
       const token = data.accessToken;
 
       if (!token) {
@@ -35,22 +34,33 @@ export function Login() {
       localStorage.setItem('token', token);
       saveToken(token);
 
-      // 👤 (Opcional) buscar perfil
+      // 👤 Buscar perfil para pegar o ID e Nome
       const me = await getProfile();
 
+      console.log('Usuário logado:', me);
+
       localStorage.setItem('user', JSON.stringify(me));
-      localStorage.setItem('userId', me.id);
+      localStorage.setItem('userId', me.id.toString());
 
       // 🚀 Redireciona
       navigate('/dashboard');
     } catch (err) {
       const axiosError = err as AxiosError<LoginError>;
+      console.error('Erro completo do servidor:', axiosError.response?.data);
 
-      setError(
-        axiosError.response?.data?.detail ||
-          axiosError.message ||
-          'Usuário ou senha inválidos'
-      );
+      let message = 'Usuário ou senha inválidos';
+
+      const detail = axiosError.response?.data?.detail;
+
+      if (Array.isArray(detail)) {
+        message = detail[0]?.msg || 'Erro de validação nos dados enviados';
+      } else if (typeof detail === 'string') {
+        message = detail;
+      } else if (axiosError.message) {
+        message = axiosError.message;
+      }
+
+      setError(message);
     }
   }
 
@@ -62,6 +72,7 @@ export function Login() {
       maxWidth={400}
       margin="auto"
       marginTop={10}
+      p={3}
     >
       <Typography variant="h5">Login</Typography>
 
@@ -89,6 +100,20 @@ export function Login() {
       >
         Entrar
       </Button>
+
+      <Box display="flex" flexDirection="column" alignItems="center" mt={2}>
+        <Typography variant="body2" color="textSecondary">
+          Não tem uma conta?
+        </Typography>
+
+        <Button
+          color="secondary"
+          onClick={() => navigate('/register')}
+          sx={{ mt: 1 }}
+        >
+          Criar nova conta
+        </Button>
+      </Box>
     </Box>
   );
 }

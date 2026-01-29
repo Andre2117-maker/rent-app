@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Box, Typography, Alert, Grid, Skeleton } from '@mui/material';
-import type { AxiosError } from 'axios';
+import axios, { AxiosError } from 'axios';
 
 import { Header } from '../components/Header';
 import { EquipmentCard } from '../components/EquipmentCard';
@@ -8,8 +8,6 @@ import { ReservationModal } from '../components/ReservationModal';
 
 import { getEquipments } from '../api/equipment.service';
 import { createReservation } from '../api/reservation.service';
-import { Link } from 'react-router-dom';
-
 interface ApiErrorDetail {
   type: string;
   loc: string[];
@@ -39,29 +37,49 @@ export function Dashboard() {
   );
   const [modalOpen, setModalOpen] = useState(false);
 
+  // Função para criar reserva com try/catch para evitar crash
   async function submitReservation(startTime: string, endTime: string) {
-    const userId = localStorage.getItem('userId');
+    try {
+      const userId = localStorage.getItem('userId');
 
-    if (!userId || !selectedEquipmentId) {
-      throw new Error('Usuário ou equipamento inválido');
+      // Encontramos o objeto completo do equipamento selecionado para pegar o nome
+      const selectedEquipment = equipments.find(
+        (e) => e.id === selectedEquipmentId
+      );
+
+      if (!userId || !selectedEquipment) {
+        alert('Usuário ou Equipamento não identificado.');
+        return;
+      }
+
+      // CHAMADA AO MOCK: Passamos os dados necessários para o localStorage
+      await createReservation({
+        equipmentId: selectedEquipment.id,
+        equipmentName: selectedEquipment.name, // O mock precisa disso para listar depois
+        startTime: startTime,
+        endTime: endTime,
+      });
+
+      // Atualização Visual: Muda o status para 'Occupied' na tela na hora
+      setEquipments((prev) =>
+        prev.map((eq) =>
+          eq.id === selectedEquipmentId
+            ? { ...eq, currentStatusName: 'Occupied' }
+            : eq
+        )
+      );
+
+      setModalOpen(false);
+      alert(
+        `Reserva de "${selectedEquipment.name}" realizada com sucesso! (Modo Simulação)`
+      );
+    } catch (err) {
+      console.error('Erro ao reservar:', err);
+      alert('Erro ao realizar reserva simulada.');
     }
-
-    await createReservation({
-      equipmentId: selectedEquipmentId,
-      startTime: new Date(startTime).toISOString(),
-      endTime: new Date(endTime).toISOString(),
-    });
-
-    // Atualiza status do equipamento após sucesso
-    setEquipments((prev) =>
-      prev.map((eq) =>
-        eq.id === selectedEquipmentId
-          ? { ...eq, currentStatusName: 'Occupied' }
-          : eq
-      )
-    );
   }
 
+  // Busca de equipamentos com blindagem contra objetos no estado de erro
   useEffect(() => {
     async function fetchEquipments() {
       try {
@@ -71,17 +89,23 @@ export function Dashboard() {
         const data = await getEquipments();
         setEquipments(data);
       } catch (err) {
-        const error = err as AxiosError<ApiErrorResponse>;
-
         let message = 'Erro ao carregar equipamentos';
 
-        if (Array.isArray(error.response?.data?.detail)) {
-          message = error.response.data.detail[0].msg;
-        } else if (typeof error.response?.data?.detail === 'string') {
-          message = error.response.data.detail;
+        if (axios.isAxiosError(err)) {
+          const axiosError = err as AxiosError<ApiErrorResponse>;
+          const detail = axiosError.response?.data?.detail;
+
+          // Se o backend mandou o array de erro do Pydantic {type, loc, msg...}
+          if (Array.isArray(detail)) {
+            message = detail[0]?.msg || message;
+          }
+          // Se o backend mandou apenas uma string
+          else if (typeof detail === 'string') {
+            message = detail;
+          }
         }
 
-        setError(message);
+        setError(message); // Agora garantimos que 'message' é uma string
       } finally {
         setLoading(false);
       }
@@ -92,62 +116,50 @@ export function Dashboard() {
 
   const skeletons = Array.from({ length: 6 });
 
-  if (error) {
-    return (
-      <>
-        <Header />
-        <Box mt={5} px={4}>
-          <Alert severity="error">{error}</Alert>
-        </Box>
-      </>
-    );
-  }
-
   return (
     <>
       <Header />
 
       <Box p={4}>
-        <Typography variant="h4" mb={3}>
-          Equipamentos
-        </Typography>
-
-        <Box mb={3}>
-          <Link to="/commands" style={{ textDecoration: 'none' }}>
-            <Typography
-              sx={{
-                display: 'inline-block',
-                padding: '8px 16px',
-                backgroundColor: '#1976d2',
-                color: '#fff',
-                borderRadius: '4px',
-                cursor: 'pointer',
-              }}
-            >
-              Enviar comandos
-            </Typography>
-          </Link>
+        <Box
+          display="flex"
+          justifyContent="space-between"
+          alignItems="center"
+          mb={3}
+        >
+          <Typography variant="h4">Equipamentos</Typography>
         </Box>
 
+        {error && (
+          <Box mb={3}>
+            <Alert severity="error">{error}</Alert>
+          </Box>
+        )}
+
         <Grid container spacing={3}>
-          {/* LOADING */}
+          {/* LOADING STATE */}
           {loading &&
             skeletons.map((_, index) => (
-              // @ts-expect-error MUI Grid typing issue
-              <Grid item xs={12} sm={6} md={4} key={`skeleton-${index}`}>
+              // Removido a prop 'item'. No MUI v6+, Grid herda as propriedades de tamanho diretamente.
+              <Grid key={`skeleton-${index}`} size={{ xs: 12, sm: 6, md: 4 }}>
                 <Box>
-                  <Skeleton variant="rectangular" height={120} />
-                  <Skeleton width="60%" />
+                  <Skeleton
+                    variant="rectangular"
+                    height={120}
+                    sx={{ borderRadius: 2 }}
+                  />
+                  <Skeleton width="60%" sx={{ mt: 1 }} />
                   <Skeleton width="40%" />
                 </Box>
               </Grid>
             ))}
 
-          {/* LISTA DE EQUIPAMENTOS */}
+          {/* LISTA DE EQUIPAMENTOS REAL */}
           {!loading &&
+            !error &&
             equipments.map((equipment) => (
-              // @ts-expect-error MUI Grid typing issue
-              <Grid item xs={12} sm={6} md={4} key={equipment.id}>
+              // Se estiver usando MUI v6, usamos a prop 'size' em vez de xs, sm, md isolados
+              <Grid key={equipment.id} size={{ xs: 12, sm: 6, md: 4 }}>
                 <EquipmentCard
                   name={equipment.name}
                   description={equipment.description}
@@ -159,12 +171,6 @@ export function Dashboard() {
                 />
               </Grid>
             ))}
-
-          {!loading && equipments.length === 0 && (
-            <Box mt={4}>
-              <Typography>Nenhum equipamento disponível.</Typography>
-            </Box>
-          )}
         </Grid>
       </Box>
 
