@@ -8,6 +8,7 @@ import { ReservationModal } from '../components/ReservationModal';
 
 import { getEquipments } from '../api/equipment.service';
 import { createReservation } from '../api/reservation.service';
+
 interface ApiErrorDetail {
   type: string;
   loc: string[];
@@ -37,12 +38,10 @@ export function Dashboard() {
   );
   const [modalOpen, setModalOpen] = useState(false);
 
-  // Função para criar reserva com try/catch para evitar crash
   async function submitReservation(startTime: string, endTime: string) {
     try {
       const userId = localStorage.getItem('userId');
 
-      // Encontramos o objeto completo do equipamento selecionado para pegar o nome
       const selectedEquipment = equipments.find(
         (e) => e.id === selectedEquipmentId
       );
@@ -52,15 +51,13 @@ export function Dashboard() {
         return;
       }
 
-      // CHAMADA AO MOCK: Passamos os dados necessários para o localStorage
       await createReservation({
         equipmentId: selectedEquipment.id,
-        equipmentName: selectedEquipment.name, // O mock precisa disso para listar depois
+        equipmentName: selectedEquipment.name,
         startTime: startTime,
         endTime: endTime,
       });
 
-      // Atualização Visual: Muda o status para 'Occupied' na tela na hora
       setEquipments((prev) =>
         prev.map((eq) =>
           eq.id === selectedEquipmentId
@@ -79,7 +76,6 @@ export function Dashboard() {
     }
   }
 
-  // Busca de equipamentos com blindagem contra objetos no estado de erro
   useEffect(() => {
     async function fetchEquipments() {
       try {
@@ -95,17 +91,14 @@ export function Dashboard() {
           const axiosError = err as AxiosError<ApiErrorResponse>;
           const detail = axiosError.response?.data?.detail;
 
-          // Se o backend mandou o array de erro do Pydantic {type, loc, msg...}
           if (Array.isArray(detail)) {
             message = detail[0]?.msg || message;
-          }
-          // Se o backend mandou apenas uma string
-          else if (typeof detail === 'string') {
+          } else if (typeof detail === 'string') {
             message = detail;
           }
         }
 
-        setError(message); // Agora garantimos que 'message' é uma string
+        setError(message);
       } finally {
         setLoading(false);
       }
@@ -137,10 +130,8 @@ export function Dashboard() {
         )}
 
         <Grid container spacing={3}>
-          {/* LOADING STATE */}
           {loading &&
             skeletons.map((_, index) => (
-              // Removido a prop 'item'. No MUI v6+, Grid herda as propriedades de tamanho diretamente.
               <Grid key={`skeleton-${index}`} size={{ xs: 12, sm: 6, md: 4 }}>
                 <Box>
                   <Skeleton
@@ -154,11 +145,9 @@ export function Dashboard() {
               </Grid>
             ))}
 
-          {/* LISTA DE EQUIPAMENTOS REAL */}
           {!loading &&
             !error &&
             equipments.map((equipment) => (
-              // Se estiver usando MUI v6, usamos a prop 'size' em vez de xs, sm, md isolados
               <Grid key={equipment.id} size={{ xs: 12, sm: 6, md: 4 }}>
                 <EquipmentCard
                   name={equipment.name}
@@ -174,7 +163,6 @@ export function Dashboard() {
         </Grid>
       </Box>
 
-      {/* MODAL DE RESERVA */}
       {selectedEquipmentId && (
         <ReservationModal
           open={modalOpen}
