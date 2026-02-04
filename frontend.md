@@ -38,7 +38,7 @@ Siga os passos abaixo para rodar o projeto no seu computador:
 Clonar o repositório:
 
 Bash
-git clone ssh://git@git.lse.dev.br:776/nivelamento/2026.1/rent-app.git
+git clone https://github.com/Andre2117-maker/rent-app.git
 cd rent-app
 Trocar para a branch de desenvolvimento:
 
