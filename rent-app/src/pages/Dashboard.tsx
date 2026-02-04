@@ -39,24 +39,18 @@ export function Dashboard() {
   const [modalOpen, setModalOpen] = useState(false);
 
   const handleEdit = (id: string) => {
-    // Para o portfólio: Você pode abrir um modal de edição aqui
     console.log('Abrir modal de edição para o ID:', id);
     alert(`Editar equipamento ${id} (Funcionalidade em desenvolvimento)`);
   };
 
   const handleDelete = async (id: string) => {
-    // 1. Confirmação simples
     const confirmed = window.confirm(
       'Tem certeza que deseja deletar este equipamento?'
     );
 
     if (confirmed) {
       try {
-        // Simulação de Deletar (Remove da tela imediatamente)
         setEquipments((prev) => prev.filter((eq) => eq.id !== id));
-
-        // Aqui você chamaria sua API:
-        // await deleteEquipment(id);
 
         alert('Equipamento removido com sucesso!');
       } catch (err) {
